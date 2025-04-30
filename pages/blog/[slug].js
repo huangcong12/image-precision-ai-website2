@@ -1,14 +1,10 @@
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
 import { NextSeo } from 'next-seo';
-import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 
 export default function BlogPost({ post }) {
-  const router = useRouter();
-
-  if (router.isFallback) {
-    return <div>加载中...</div>;
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <NextSeo
@@ -33,26 +29,34 @@ export default function BlogPost({ post }) {
 }
 
 export async function getStaticPaths() {
-  // 在实际部署时，这里将替换为从 GitHub 仓库获取所有博客文章的 slug
-  return {
-    paths: [{ params: { slug: 'first-blog-post' } }],
-    fallback: true
-  };
+  const blogsDirectory = path.join(process.cwd(), 'content/blogs');
+  const filenames = fs.readdirSync(blogsDirectory);
+
+  const paths = filenames
+    .filter(filename => filename.endsWith('.md'))
+    .map(filename => ({
+      params: { slug: filename.replace('.md', '') }
+    }));
+
+  return { paths, fallback: false };
 }
 
 export async function getStaticProps({ params }) {
-  // 在实际部署时，这里将替换为从 GitHub 仓库获取具体博客内容的代码
-  const post = {
-    slug: 'first-blog-post',
-    title: '我的第一篇博客',
-    date: '2025-05-01',
-    description: '这是一篇测试博客文章',
-    content: '## 欢迎来到我的博客\n\n这是我使用 Next.js 和 Cloudflare Pages 搭建的第一篇博客文章。'
-  };
+  const blogsDirectory = path.join(process.cwd(), 'content/blogs');
+  const fullPath = path.join(blogsDirectory, `${params.slug}.md`);
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+
+  const { data, content } = matter(fileContents);
 
   return {
     props: {
-      post
+      post: {
+        slug: params.slug,
+        title: data.title,
+        date: typeof data.date === 'string' ? data.date : data.date.toISOString().split('T')[0],
+        description: data.description,
+        content: content
+      }
     }
   };
 }

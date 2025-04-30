@@ -1,4 +1,7 @@
+import fs from 'fs';
+import path from 'path';
 import Link from 'next/link';
+import matter from 'gray-matter';
 import { NextSeo } from 'next-seo';
 
 export default function BlogIndex({ posts }) {
@@ -31,15 +34,24 @@ export default function BlogIndex({ posts }) {
 }
 
 export async function getStaticProps() {
-  // 在实际部署时，这里将替换为从 GitHub 仓库获取文件列表的代码
-  const posts = [
-    {
-      slug: 'first-blog-post',
-      title: '我的第一篇博客',
-      date: '2025-05-01',
-      description: '这是一篇测试博客文章'
-    }
-  ];
+  const blogsDirectory = path.join(process.cwd(), 'content/blogs');
+  const filenames = fs.readdirSync(blogsDirectory);
+
+  const posts = filenames
+    .filter(filename => filename.endsWith('.md'))
+    .map(filename => {
+      const fullPath = path.join(blogsDirectory, filename);
+      const fileContents = fs.readFileSync(fullPath, 'utf8');
+      const { data } = matter(fileContents);
+
+      return {
+        slug: filename.replace('.md', ''),
+        title: data.title,
+        date: typeof data.date === 'string' ? data.date : data.date.toISOString().split('T')[0],
+        description: data.description
+      };
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // 使用 getTime() 转换为数字
 
   return {
     props: {
