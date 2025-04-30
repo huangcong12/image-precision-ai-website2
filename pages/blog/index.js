@@ -1,8 +1,33 @@
-import fs from 'fs';
-import path from 'path';
 import Link from 'next/link';
-import matter from 'gray-matter';
 import { NextSeo } from 'next-seo';
+
+// 直接定义博客列表
+const BLOG_POSTS = [
+  {
+    slug: 'first-blog-post',
+    title: '我的第一篇博客',
+    date: '2025-05-01',
+    description: '这是一篇测试博客文章'
+  },
+  {
+    slug: 'nextjs-getting-started',
+    title: 'Next.js 入门指南',
+    date: '2025-04-15',
+    description: '学习如何快速上手 Next.js 框架'
+  },
+  {
+    slug: 'ai-image-generation',
+    title: 'AI 图像生成技术',
+    date: '2025-04-20',
+    description: '深入探讨 AI 图像生成的最新技术发展'
+  },
+  {
+    slug: 'tech-and-life',
+    title: '技术改变生活',
+    date: '2025-04-25',
+    description: '关于技术、生活和个人成长的一些随想'
+  }
+].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 export default function BlogIndex({ posts }) {
   return (
@@ -33,29 +58,11 @@ export default function BlogIndex({ posts }) {
   );
 }
 
+// 对于静态导出，需要这个函数
 export async function getStaticProps() {
-  const blogsDirectory = path.join(process.cwd(), 'content/blogs');
-  const filenames = fs.readdirSync(blogsDirectory);
-
-  const posts = filenames
-    .filter(filename => filename.endsWith('.md'))
-    .map(filename => {
-      const fullPath = path.join(blogsDirectory, filename);
-      const fileContents = fs.readFileSync(fullPath, 'utf8');
-      const { data } = matter(fileContents);
-
-      return {
-        slug: filename.replace('.md', ''),
-        title: data.title,
-        date: typeof data.date === 'string' ? data.date : data.date.toISOString().split('T')[0],
-        description: data.description
-      };
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // 使用 getTime() 转换为数字
-
   return {
     props: {
-      posts
+      posts: BLOG_POSTS
     }
   };
 }
