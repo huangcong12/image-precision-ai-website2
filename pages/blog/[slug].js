@@ -62,15 +62,24 @@ export default function BlogPost({ post }) {
 }
 
 export async function getStaticPaths() {
-  const paths = Object.keys(BLOG_CONTENTS).map(slug => ({
-    params: { slug }
-  }));
+  const paths = [
+    { params: { slug: 'first-blog-post' } },
+    { params: { slug: 'nextjs-getting-started' } },
+    { params: { slug: 'ai-image-generation' } },
+    { params: { slug: 'tech-and-life' } }
+  ];
 
   return { paths, fallback: false };
 }
 
 export async function getStaticProps({ params }) {
   const post = BLOG_CONTENTS[params.slug];
+
+  if (!post) {
+    return {
+      notFound: true
+    };
+  }
 
   return {
     props: {
